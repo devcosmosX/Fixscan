@@ -1,0 +1,9 @@
+# Copy this file to `local.properties` and fill in real values.
+# `local.properties` is git-ignored so your secrets never get committed.
+
+# Path to your Android SDK (Android Studio usually sets this automatically).
+# sdk.dir=/Users/you/Library/Android/sdk
+
+# Your Anthropic Claude API key. Get one at https://console.anthropic.com/
+# If left blank, the app still runs and uses a built-in offline demo generator.
+CLAUDE_API_KEY=

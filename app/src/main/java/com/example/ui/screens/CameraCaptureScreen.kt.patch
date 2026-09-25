@@ -1,0 +1,80 @@
+--- app/src/main/java/com/example/ui/screens/CameraCaptureScreen.kt
++++ app/src/main/java/com/example/ui/screens/CameraCaptureScreen.kt
+@@ -3,6 +3,9 @@
+ import android.net.Uri
++import android.Manifest
++import android.content.pm.PackageManager
++import androidx.core.content.ContextCompat
++import androidx.core.content.FileProvider
+ import androidx.activity.compose.rememberLauncherForActivityResult
+ import androidx.activity.result.contract.ActivityResultContracts
+ import androidx.compose.foundation.Image
+@@ -19,6 +22,7 @@
+ import androidx.compose.ui.graphics.Color
+ import androidx.compose.ui.layout.ContentScale
++import androidx.compose.ui.platform.LocalContext
+ import androidx.compose.ui.platform.testTag
+ import androidx.compose.ui.res.painterResource
+@@ -43,12 +47,21 @@
+ ) {
++    val context = LocalContext.current
+     var previewUri by remember { mutableStateOf<Uri?>(currentPhotoUri?.let { Uri.parse(it) }) }
++    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
+ 
+     val galleryLauncher = rememberLauncherForActivityResult(
+         contract = ActivityResultContracts.GetContent()
+     ) { uri ->
+         if (uri != null) {
+             previewUri = uri
+             onPhotoCaptured(uri)
+         }
+     }
++
++    val cameraLauncher = rememberLauncherForActivityResult(
++        contract = ActivityResultContracts.TakePicture()
++    ) { success ->
++        if (success && tempCameraUri != null) {
++            previewUri = tempCameraUri
++            onPhotoCaptured(tempCameraUri)
++        }
++    }
++
++    var hasCameraPermission by remember {
++        mutableStateOf(
++            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
++        )
++    }
++
++    val cameraPermissionLauncher = rememberLauncherForActivityResult(
++        contract = ActivityResultContracts.RequestPermission()
++    ) { isGranted ->
++        hasCameraPermission = isGranted
++        if (isGranted) {
++            val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", java.io.File.createTempFile("capture_", ".jpg", context.cacheDir))
++            tempCameraUri = uri
++            cameraLauncher.launch(uri)
++        }
++    }
++
++    LaunchedEffect(Unit) {
++        if (!hasCameraPermission) {
++            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
++        }
++    }
+ 
+     FrostedBackground {
+@@ -189,12 +220,15 @@
+                             // Shutter Capture Button
+                             Button(
+                                 onClick = {
+-                                    val mockPhotoUri = Uri.parse("android.resource://com.example/" + R.drawable.img_hero_banner)
+-                                    previewUri = mockPhotoUri
+-                                    onPhotoCaptured(mockPhotoUri)
++                                    if (hasCameraPermission) {
++                                        val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", java.io.File.createTempFile("capture_", ".jpg", context.cacheDir))
++                                        tempCameraUri = uri
++                                        cameraLauncher.launch(uri)
++                                    } else {
++                                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
++                                    }
+                                 },

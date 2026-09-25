@@ -1,0 +1,6 @@
+{
+  "name": "FixScan",
+  "description": "AI-powered appliance diagnostic tool, repair cost estimator, and nearby mechanics finder.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
